@@ -1,0 +1,42 @@
+version: '3'
+volumes:
+  postgres_data:
+      driver: local
+services:
+  postgres:
+      image: docker.io/postgres:15-bullseye
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
+      environment:
+        - POSTGRES_DB=${POSTGRES_DB}
+        - POSTGRES_USER=${POSTGRES_USER}
+        - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      ports:
+        - 5432:5432
+  keycloak:
+      build: ./keycloak/
+      command: start --optimized --verbose
+      volumes:
+        - /etc/letsencrypt/live/norpan-keycloak1.cnaas.sunet.se/fullchain.pem:/etc/fullchain.pem
+        - /etc/letsencrypt/live/norpan-keycloak1.cnaas.sunet.se/privkey.pem:/etc/privkey.pem
+      environment:
+        - KEYCLOAK_USER=${KEYCLOAK_USER}
+        - KEYCLOAK_PASSWORD=${KEYCLOAK_PASSWORD}
+        - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
+        - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+        - KEYCLOAK_HTTPS_PORT=${KEYCLOAK_HTTPS_PORT}
+        - KC_HOSTNAME_PORT=${KC_HOSTNAME_PORT}
+        - KC_HTTPS_CERTIFICATE_FILE=${KC_HTTPS_CERTIFICATE_FILE}
+        - KC_HTTPS_CERTIFICATE_KEY_FILE=${KC_HTTPS_CERTIFICATE_KEY_FILE}
+        - KC_HEALTH_ENABLED=true
+        - KC_METRICS_ENABLED=true
+        - KC_DB=${KC_DB}
+        - KC_DB_URL=jdbc:${DB_DRIVER}://${DB_HOST}:${DB_PORT}/${POSTGRES_DB}
+        - KC_DB_USERNAME=${POSTGRES_USER}
+        - KC_DB_PASSWORD=${POSTGRES_PASSWORD}
+        - KC_HOSTNAME=${KC_HOSTNAME}
+      ports:
+        - 8443:8443
+      depends_on:
+        - postgres
+
